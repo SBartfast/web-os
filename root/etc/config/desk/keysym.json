@@ -1,0 +1,9 @@
+{
+	"t_A":{"NAME":"open_terminal"},
+	"`_A":{"NAME":"window_cycle"},
+	"x_A":{"NAME":"close_window"},
+	"m_A":{"NAME":"maximize_window"},
+	"c_CA":{"NAME":"toggle_desktop"},
+	"n_A":{"n":"minimize_window"},
+	"f_CAS":{"n":"fullscreen_window"}
+}

@@ -1,0 +1,434 @@
+<html>
+<head>
+<script>
+window.__OS_NS__="LOTW";
+
+window[__OS_NS__]={error:{message:""},libs:{}, test:{}, coms:{}, devapps:{}, apps:{}, mods:{}, sys:{}, api:{}, init:{}, initvars:{}};
+
+</script>
+<title>
+</title>
+<meta name="description" content="This is an operating system that runs inside of most modern web browsers">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!-- Style« -->
+<style>
+.scroller::-webkit-scrollbar{width:0.5em;background-color:#bbb;}
+.scroller::-webkit-scrollbar-thumb{background-color:#666;}
+.scroller:focus{outline:none;}
+.mainwin::-webkit-scrollbar{width:0.5em;background-color:#bbb;}
+.mainwin::-webkit-scrollbar-thumb{background-color:#666;}
+.mainwin:focus{outline:none;}
+.link{
+	text-decoration:underline;
+	color:blue;
+}
+a:hover{
+	cursor:pointer;
+}
+.clicked{
+	text-decoration:none;
+	font-style:italic;
+	color:#999;
+}
+.clicked:hover{
+	cursor:default;
+}
+.hilite{
+	font-weight:bold;
+	color:red;
+}
+@keyframes shake {
+10%,90%{transform:translate3d(-1px,0,0);}
+20%,80%{transform:translate3d(2px,0,0);}
+30%,50%,70%{transform:translate3d(-4px,0,0);}
+40%,60%{transform:translate3d(4px,0,0);}
+}
+
+.icon {
+	height:100px;
+	width:100px;
+	overflow:hidden;
+	display:flex;
+	flex-direction:column;
+	justify-content:space-around;
+	align-items:center;
+	padding-left:5px;
+	padding-right:5px;
+	border:2px solid transparent;
+}
+.iconi{
+	min-width:48;
+	text-align:center;
+	font-size:38;
+	position:relative;
+}
+.iconl {
+	overflow:hidden;
+	max-height:17px;
+	text-align:center;
+	overflow-wrap:break-word;
+	width:100%;
+	font-size:15;
+	background-color:#000;
+	color:#ccc;
+	padding:1px;
+}
+</style>
+<!-- » -->
+</head>
+<body>
+<div style="z-index:100000000;position:absolute;left:0;top:0;overflow:hidden;">
+<table style="font-family:monospace;font-size:18;" id="initlog"></table>
+</div>
+<script>
+(function(){
+"use strict";
+//Var«
+const NS = window[__OS_NS__];
+const _ivars = NS.initvars;
+const _initlog = document.getElementById("initlog");
+const inittab = _initlog.parentNode;
+inittab.style.height=window.clientHeight;
+NS.initlogelem = _initlog;
+let devmode = true;
+let devenv = true;
+let verbose;
+let silent;
+let use_fs_type = null;
+let orig =  window.location.origin;
+if (orig.match(/localhost/)||orig.match(/127\.0\.0\.1/)||orig.match(/192\.168\./)) devenv=true;
+let srch = window.location.search;
+if (srch.match(/[&?]dev=/)) devmode = true;
+if (srch.match(/[&?]fstype=persist(ent)?/)) use_fs_type = "persistent";
+else if (srch.match(/[&?]fstype=temp(orary)?/)) use_fs_type = "temporary";
+
+//if (devmode) verbose = false;
+//else verbose = true;
+
+if (srch.match(/[&?]verbose=/)) verbose = true;
+else verbose = false;
+
+//if (srch.match(/[&?]silent=/)) verbose = false;
+
+let step_cb;
+
+let step;
+
+let stmode = false;
+if (srch.match(/[&?]bootstepper=/)){
+	stmode=true;
+	verbose=true;
+	document.onkeydown=e=>{
+		if (e.key=="Enter") step_cb();
+	};
+}
+NS.stepmode = stmode;
+
+//if (devenv||verbose){
+
+document.body.style.backgroundColor="#000";
+document.body.style.color="#ccc";
+if (!verbose) _initlog.style.display="none";
+//»
+const mk=str=>document.createElement(str);
+const noop=()=>{};
+const log=(...args)=>{console.log(...args)};
+const initstep=(str, if_error)=>{//«
+	let obj = {
+		val:()=>{
+			outtd.innerHTML=str;
+		},
+		ok:()=>{
+			outtd.innerHTML='<span style="color:#0f0;">&#10003;</span>';
+		},
+		fail:(not_fatal)=>{
+			if (!not_fatal) _initlog.style.display="";
+			outtd.style.opacity=1;
+			outtd.innerHTML='<span style="color:#f00;">&#10007;</span>';
+		}
+	}
+	if (if_error) {
+		_initlog.style.display="";
+		str = "<br>Error: " + str;
+	}
+	let tr = mk('tr');
+	let numtd = mk('td');
+	tr.appendChild(numtd);
+	
+	let n = _initlog.childNodes.length;
+	let nstr;
+	if (n<10) nstr = "&nbsp;"+n;
+	else nstr = n;
+	numtd.innerHTML= nstr+")";
+	let intd = mk('td');
+	intd.style.width=(window.innerWidth-60)+"px";
+	intd.innerHTML=str;
+	tr.appendChild(intd);
+	let outtd = mk('td');
+	outtd.style.fontSize="15px";
+	tr.appendChild(outtd);
+	_initlog.appendChild(tr);
+	let dy = inittab.scrollHeight-window.innerHeight;
+	if (dy > 0) inittab.y = -dy;
+	if (verbose) console.log(n+") "+str);
+	if (!stmode) return obj;
+	return new Promise((y,n)=>{
+		step_cb = ()=>{y(obj)};
+	});
+}//»
+const initlog=(str)=>{//«
+	let tr = mk('tr');
+	let numtd = mk('td');
+	tr.appendChild(numtd);
+	let n = _initlog.childNodes.length;
+	let nstr;
+	if (n<10) nstr = "&nbsp;"+n;
+	else nstr = n;
+	numtd.innerHTML= nstr+")";
+	let intd = mk('td');
+	intd.style.width=(0.8*window.innerWidth)+"px";
+	intd.innerHTML=str;
+	tr.appendChild(intd);
+	let outtd = mk('td');
+	outtd.innerHTML="&nbsp;";
+	tr.appendChild(outtd);
+	_initlog.appendChild(tr);
+	let dy = inittab.scrollHeight-window.innerHeight;
+	if (dy > 0) inittab.y = -dy;
+	if (verbose) console.log(n+") "+str);
+}//»
+const err=mess=>{initlog(mess, true);}//«
+const blobs={};
+window.errorstack=()=>{console.log("Nothing found!");};
+const dostack=stack=>{
+	if (!stack) return;
+	let sty = "background-color:#999;color:#000;";
+	let arr = stack.split("\\n");
+	let mess = arr.shift();
+	console.log("%c"+mess,sty);
+	for (let ln of arr){
+		ln=ln.trim();
+		let marr;
+		if (marr=ln.match(/^(.+?)\((blob:.+?):(\d+):(\d+)\)/)){
+			let name = blobs[marr[2]].split(".").pop()
+			console.log(`%c ${marr[1]} ${name}.js:${marr[3]}:${marr[4]}`, sty);
+		}
+	}
+
+};
+window.onunhandledrejection=function(e){
+	setTimeout(()=>{
+		dostack(e.reason.stack);
+	},0);
+};
+window.onerror = function (msg, url, lineNo, columnNo, error) {
+setTimeout(()=>{
+    if (url && url.match(/^blob:/)){
+        let which = blobs[url];
+        let sty="background-color:#900;color:#aaa;font-size:1.25em;";
+        if (which){
+            which = which.replace(/\./g,"/");
+            console.log(`%c In '${which}.js', line:${lineNo} col:${columnNo}`,sty);
+            console.log("%c "+msg,sty);
+        }   
+    }   
+},0);
+console.error(error);
+window.errorstack=()=>{dostack(error.stack);}
+}
+//» 
+const doinit=async inarg=>{//«
+	let s;
+	if (stmode) {
+		initlog("Entering boot sequence stepping mode");
+		step=await initstep("Please press 'Enter' to execute every step (like this one!)");
+		step.ok();
+	}
+	const load_core=async()=>{//«
+		let argobj={};
+		let qobj = {};
+		let qstr = srch;
+		let fs_type = "temporary";
+		let rep_qarr = [];
+		let nogo = ["set_branch"];
+		let didrep = false;
+		if (qstr) {//«
+			let qarr = qstr.slice(1).split("&");
+			for (let i=0; i < qarr.length; i++) {
+				let qelm = qarr[i].split("=");
+				let key = qelm.shift();
+				key = key.replace(/-/g,"_")
+				let val = qelm.join("=");
+				qobj[key] = val;
+				if (nogo.indexOf(key) > -1) {didrep = true}
+				else rep_qarr.push(qarr[i]);
+			}
+		}//»
+		if (didrep) {//«
+			let userep = "";
+			let q = "?";
+			if (rep_qarr.length) userep = rep_qarr.join("&");
+			if (!userep) q = "";
+			window.history.pushState({newstate: 1}, "LOTW", window.location.origin + window.location.pathname + q + userep);
+		}//»
+
+		const run_core=async(text)=>{//«
+			text = 'window[__OS_NS__].mods["sys.core"]=function(qobj,blobs){"use strict";'+text+'}';
+			let scr = document.createElement('script');
+			scr.onload=async()=>{
+				step.ok();
+				step = await initstep("Running the 'core' module");
+				let coreobj = new window[__OS_NS__].mods["sys.core"](qobj,blobs);
+				step.ok();
+				coreobj.init(argobj, inarg);
+			}
+			scr.onerror=e=>{
+				step.fail();
+				initlog(e.message||e,true);
+			}
+			let url = URL.createObjectURL(new Blob([text],{type:"application/javascript"}));
+			blobs[url]="mods.sys.core";
+			scr.src=url;
+			document.head.appendChild(scr);
+		}//»
+		const do_request=async(fsarg, num_bytes)=>{//«
+			let which = (use_fs_type||fs_type);
+			let fslet = which[0];
+			argobj.USEFSTYPE = which;
+			argobj.FSLET = fslet;
+
+			window.requestFileSystem(fsarg, num_bytes, async fsret=>{//«
+				step.ok();
+				let use_branch;
+				let lst = localStorage;
+				let key = "_"+fslet+"CURBRANCH";
+				let cobj = {create:true};
+				if (qobj.setbranch){//«
+					lst[key] = qobj.setbranch;
+					use_branch = qobj.setbranch;
+					initlog("Setting branch to: " + use_branch);
+				}
+				else if (qobj.usebranch) {
+					cobj={};
+					use_branch = qobj.usebranch;
+					initlog("Temporarily using branch: " + use_branch);
+				}
+				else if (lst[key]){
+					use_branch = lst[key];
+//console.warn("Using current branch: " + use_branch);
+					initlog("Using current branch: " + use_branch);
+				}
+				else use_branch = "def";
+//»
+				step=await initstep("Requesting the root directory for branch: "+use_branch);
+				fsret.root.getDirectory(use_branch, cobj, async ret=>{//«
+					argobj.FS = ret;
+					argobj.FSBRANCH = use_branch;
+					step.ok();
+					step = await initstep("Loading the 'core' module");
+					let res;
+					try{
+						res = await fetch('/root/code/mods/sys/core.js');
+						run_core(await res.text());
+					}
+					catch(e){
+						step.fail();
+					}
+
+					return;
+				}, e=>{
+					step.fail();
+					initlog("Could not get branch: " + use_branch + " to initialize the filesystem!");
+				});//»
+			}, ()=>{
+				step.fail();
+				initlog("Could not initialize the HTML5 Filesystem API!");
+			});//»
+
+		}//»
+		try {//«
+			if ((use_fs_type == "persistent") || (use_fs_type != "temporary" && localStorage.FSTYPE=="persistent")) {
+				step=await initstep("Checking for persistent storage quota...");
+				navigator.webkitPersistentStorage.queryUsageAndQuota(async(used, granted)=>{
+					if (granted) {
+						fs_type = "persistent";
+						step.val(granted);
+						step=await initstep("Requesting persistent filesystem");
+						do_request(PERSISTENT, granted);
+					}
+					else {
+						step.fail(true);
+						step=await initstep("Requesting temporary filesystem as a fallback");
+						do_request(TEMPORARY, 5242880);
+					}
+				},e=>{
+					step.fail();
+				});
+			}
+			else {
+				step=await initstep("Requesting temporary filesystem");
+				do_request(TEMPORARY, 5242880);
+			}
+		}
+		catch(e){
+			step=await initstep("Requesting temporary filesystem");
+			do_request(TEMPORARY, 5242880);
+		}//»
+	}//»
+	s = "Checking for the native HTML5 FileSystem API"
+	if (stmode) s += " (and this one, etc.)";
+	step=await initstep(s);
+	if (!window.requestFileSystem) window.requestFileSystem = window.webkitRequestFileSystem;
+	try {//«
+		window.requestFileSystem.barf;
+//		window.requestFileSystem.barf.harf.horf;
+		step.ok();
+		load_core();
+	}//»
+	catch(e){
+		const load_shim=()=>{
+			let scr = document.createElement('script');
+			document.body.appendChild(scr);
+			scr.onerror = function(e){
+				step.fail();
+				return;
+			}
+			scr.onload = function(e){
+				if (!window.requestFileSystem) window.requestFileSystem = window.webkitRequestFileSystem;
+				try {
+					window.requestFileSystem.barf;
+					step.ok();
+					load_core();
+				}
+				catch(e) {
+					step.fail();
+					console.error(e);
+					return;
+				}
+			}
+			scr.src = URL.createObjectURL(new Blob([localStorage["fs-shim.js"]],{type:"application/javascript"}));
+		};
+		step.fail(true);
+		step = await initstep("Reverting to a polyfill");
+		if (localStorage["fs-shim.js"]) return load_shim();
+		let rv = await fetch('/www/js/fs-shim.js');
+		if (!(rv&&rv.ok===true)){
+			step.fail();
+			return;
+		}
+		localStorage["fs-shim.js"] = await rv.text();
+		load_shim();
+	}
+	
+}//»
+NS.init = doinit;
+NS.initlog = initlog;
+NS.initstep = initstep;
+})();
+</script>
+<script>
+window[__OS_NS__].init();
+</script>
+<a name="_"></a>
+</body>
+</html>
