@@ -1,5 +1,5 @@
 # cheeryos
 
-node server.js
+$ node server.js
 
-Load the os in a browser: localhost:8080/desk.os
+Go here a browser: localhost:8080/desk.os
